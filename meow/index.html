@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>meow</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fdf6f9;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  .grid {
+    width: calc(5*60px + 4*4px); /* tiles + gaps */
+    height: calc(5*60px + 4*4px);
+    display: inline-grid;
+    grid-template-columns: repeat(5, 60px);
+    grid-template-rows: repeat(5, 60px);
+    gap: 4px;
+    position: relative;
+    background: #ffe6ec;
+    border-radius: 12px;
+  }
+
+  .tile {
+    width: 60px;
+    height: 60px;
+    background: #ffd9e0;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    user-select: none;
+  }
+
+  .tile:hover {
+    background: #ffb8d2;
+  }
+
+  .character {
+    position: absolute;
+    font-size: 1.5rem;
+    pointer-events: none; 
+    transition: top 0.3s, left 0.3s;
+    z-index: 2;
+  }
+
+  .message-box {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #d66a87;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+
+  .message-box.show {
+    opacity: 1;
+  }
+
+  .snowflake {
+    position: absolute;
+    top: -10px;
+    color: #ffb8d2cc;
+    font-size: 1rem;
+    user-select: none;
+    animation: fall linear infinite;
+    opacity: 0.9;
+  }
+
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="game-container">
+  <div class="grid" id="grid"></div>
+  <div class="message-box" id="message">i hate coding, but i love you <3</div>
+  </div>             
+
+<script>
+  const grid = document.getElementById("grid");
+  const message = document.getElementById("message");
+
+  const rows = 5;
+  const cols = 5;
+  const tileSize = 60;
+  const gap = 4;
+  const giftPos = { row: 4, col: 4 };
+  let charPos = { row: 0, col: 0 };
+
+  const character = document.createElement("div");
+  character.className = "character";
+  character.innerHTML = "🐈‍⬛";
+  grid.appendChild(character);
+
+  const tiles = [];
+  for (let r = 0; r < rows; r++) {
+    tiles[r] = [];
+    for (let c = 0; c < cols; c++) {
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.dataset.row = r;
+      tile.dataset.col = c;
+      if (r === giftPos.row && c === giftPos.col) tile.innerHTML = "🐾";
+      tile.addEventListener("click", () => moveCharacter(r, c));
+      grid.appendChild(tile);
+      tiles[r][c] = tile;
+    }
+  }
+
+  function moveCharacter(row, col) {
+    charPos = { row, col };
+    const tile = tiles[row][col];
+    const rect = tile.getBoundingClientRect();
+    const gridRect = grid.getBoundingClientRect();
+
+    const top = tile.offsetTop + tile.offsetHeight/2 - character.offsetHeight/2;
+    const left = tile.offsetLeft + tile.offsetWidth/2 - character.offsetWidth/2;
+    character.style.top = top + "px";
+    character.style.left = left + "px";
+
+    if (row === giftPos.row && col === giftPos.col) {
+      message.classList.add("show");
+    }
+  }
+
+  moveCharacter(charPos.row, charPos.col);
+
+  const snowflakeCount = 40;
+  for (let i = 0; i < snowflakeCount; i++) {
+    const flake = document.createElement("div");
+    flake.className = "snowflake";
+    flake.innerHTML = "❄";
+    flake.style.left = Math.random() * 100 + "vw";
+    flake.style.animationDuration = (4 + Math.random() * 6) + "s";
+    flake.style.fontSize = (12 + Math.random() * 10) + "px";
+    flake.style.opacity = 0.6 + Math.random() * 0.4;
+    document.body.appendChild(flake);
+  }
+</script>
+
+</body>
+</html>
