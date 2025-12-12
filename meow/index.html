@@ -16,10 +16,12 @@
     overflow: hidden;
   }
 
+  // what the fuck are these things for??
   .game-container {
     display: flex;
     flex-direction: column;
     align-items: center;
+    transition: opacity 0.6s ease;
   }
 
   .grid {
@@ -32,6 +34,7 @@
     position: relative;
     background: #ffe6ec;
     border-radius: 12px;
+    transition: opacity 0.6s ease;
   }
 
   .tile {
@@ -55,7 +58,7 @@
     position: absolute;
     font-size: 1.5rem;
     pointer-events: none;
-    transition: top 0.3s, left 0.3s;
+    transition: top 0.3s, left 0.3s, opacity 0.6s;
     z-index: 2;
   }
 
@@ -85,32 +88,91 @@
   @keyframes fall {
     to { transform: translateY(110vh) rotate(360deg); }
   }
+
+  .final-screen {
+    position: fixed;
+    inset: 0;
+    background: #fde7ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.5s ease;
+    font-family: 'Inter', sans-serif;
+    padding: 20px;
+  }
+
+  .final-screen.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .final-letter {
+    background: #ffdae6;
+    padding: 40px 50px;
+    border-radius: 16px;
+    max-width: 480px;
+    animation: pop 1s ease;
+  }
+
+  .final-letter h1 {
+    font-size: 2rem;
+    color: #d95f86;
+    margin-bottom: 10px;
+  }
+
+  .final-letter p {
+    font-size: 1.2rem;
+    color: #b14567;
+    line-height: 1.6;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
 </style>
 </head>
 <body>
 
-<div class="game-container">
+<div class="game-container" id="gameContainer">
   <div class="grid" id="grid"></div>
   <div class="message-box" id="message">i hate coding, but i love you <3</div>
-</div>             
+</div>
+
+<div id="finalScreen" class="final-screen">
+  <div class="final-letter">
+    <h1>for you, my love</h1>
+    <p>
+      thank you for sharing the holiday with me.<br>
+      i'm glad it's you above all,<br>
+      and i'm very proud to be your girlfriend.<br>
+      i love you more than you know.
+    </p>
+  </div>
+</div>
 
 <script>
   const grid = document.getElementById("grid");
   const message = document.getElementById("message");
+  const gameContainer = document.getElementById("gameContainer");
 
   const rows = 5;
   const cols = 5;
-  const tileSize = 60;
-  const gap = 4;
 
-  const levels = [
-    { pawPos: { row: 4, col: 4 }, message: "i hate coding, but i love you <3" },
-    { pawPos: { row: 2, col: 1 }, message: "always my favorite person :)" },
-    { pawPos: { row: 0, col: 3 }, message: "careful w my tv tho" }
+  const bombsPerLevel = [2, 3, 4];  // you can change these
+
+  const levelMessages = [
+    "i hate coding, but i love you <3",
+    "always my favorite person :)",
+    "careful w my tv tho"
   ];
 
   let currentLevel = 0;
   let charPos = { row: 0, col: 0 };
+  let bombMap = [];
 
   const character = document.createElement("div");
   character.className = "character";
@@ -123,12 +185,19 @@
     for (let c = 0; c < cols; c++) {
       const tile = document.createElement("div");
       tile.className = "tile";
-      tile.dataset.row = r;
-      tile.dataset.col = c;
       tile.addEventListener("click", () => tryMove(r, c));
       grid.appendChild(tile);
       tiles[r][c] = tile;
     }
+  }
+
+  function getRandomTile(excluded = []) {
+    let r, c;
+    do {
+      r = Math.floor(Math.random() * rows);
+      c = Math.floor(Math.random() * cols);
+    } while (excluded.some(e => e.row === r && e.col === c));
+    return { row: r, col: c };
   }
 
   function tryMove(row, col) {
@@ -141,6 +210,20 @@
   }
 
   function moveCharacter(row, col) {
+    if (bombMap[row][col]) {
+      tiles[row][col].innerHTML = "💣";
+
+      message.innerHTML = "elliot is dead. restarting level...";
+      message.classList.add("show");
+
+      setTimeout(() => {
+        message.classList.remove("show");
+        setupLevel(currentLevel);
+      }, 1500);
+
+      return;
+    }
+
     charPos = { row, col };
     const tile = tiles[row][col];
 
@@ -149,40 +232,61 @@
     character.style.top = top + "px";
     character.style.left = left + "px";
 
-    const level = levels[currentLevel];
-    if (row === level.pawPos.row && col === level.pawPos.col) {
-      message.innerHTML = level.message;
+    const pawPos = currentPaw;
+    const levelMsg = levelMessages[currentLevel];
+
+    if (row === pawPos.row && col === pawPos.col) {
+      message.innerHTML = levelMsg;
       message.classList.add("show");
 
       setTimeout(() => {
         message.classList.remove("show");
         currentLevel++;
-        if (currentLevel < levels.length) {
+
+        if (currentLevel < levelMessages.length) {
           setupLevel(currentLevel);
         } else {
-          message.innerHTML = "levels completed :)";
-          message.classList.add("show");
+          showFinalScreen();
         }
       }, 2500);
     }
   }
 
-  function setupLevel(levelIndex) {
-    const level = levels[levelIndex];
+  let currentPaw = null;
 
+  function setupLevel(levelIndex) {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        if (tiles[r][c].innerHTML === "🐾") tiles[r][c].innerHTML = "";
+        tiles[r][c].innerHTML = "";
       }
     }
 
-    const { row, col } = level.pawPos;
-    tiles[row][col].innerHTML = "🐾";
+    bombMap = Array.from({ length: rows }, () => Array(cols).fill(false));
 
-    message.classList.remove("show");
+    currentPaw = getRandomTile([{ row: 0, col: 0 }]);
+
+    tiles[currentPaw.row][currentPaw.col].innerHTML = "🐾";
+
+    const bombsNeeded = bombsPerLevel[levelIndex];
+    let used = [{ row: 0, col: 0 }, currentPaw];
+
+    for (let i = 0; i < bombsNeeded; i++) {
+      const bombPos = getRandomTile(used);
+      used.push(bombPos);
+      bombMap[bombPos.row][bombPos.col] = true;
+    }
 
     charPos = { row: 0, col: 0 };
-    moveCharacter(charPos.row, charPos.col);
+    moveCharacter(0, 0);
+  }
+
+  function showFinalScreen() {
+    gameContainer.style.opacity = "0";
+
+    const fs = document.getElementById("finalScreen");
+    setTimeout(() => {
+      fs.classList.add("show");
+    }, 700);
   }
 
   document.addEventListener("keydown", (e) => {
@@ -190,20 +294,11 @@
     let newCol = charPos.col;
 
     switch (e.key) {
-      case "ArrowUp":
-        newRow = Math.max(0, charPos.row - 1);
-        break;
-      case "ArrowDown":
-        newRow = Math.min(rows - 1, charPos.row + 1);
-        break;
-      case "ArrowLeft":
-        newCol = Math.max(0, charPos.col - 1);
-        break;
-      case "ArrowRight":
-        newCol = Math.min(cols - 1, charPos.col + 1);
-        break;
-      default:
-        return;
+      case "ArrowUp": newRow = Math.max(0, charPos.row - 1); break;
+      case "ArrowDown": newRow = Math.min(rows - 1, charPos.row + 1); break;
+      case "ArrowLeft": newCol = Math.max(0, charPos.col - 1); break;
+      case "ArrowRight": newCol = Math.min(cols - 1, charPos.col + 1); break;
+      default: return;
     }
 
     moveCharacter(newRow, newCol);
