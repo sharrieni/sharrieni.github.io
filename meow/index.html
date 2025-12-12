@@ -16,8 +16,14 @@
     overflow: hidden;
   }
 
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   .grid {
-    width: calc(5*60px + 4*4px); /* tiles + gaps */
+    width: calc(5*60px + 4*4px);
     height: calc(5*60px + 4*4px);
     display: inline-grid;
     grid-template-columns: repeat(5, 60px);
@@ -48,7 +54,7 @@
   .character {
     position: absolute;
     font-size: 1.5rem;
-    pointer-events: none; 
+    pointer-events: none;
     transition: top 0.3s, left 0.3s;
     z-index: 2;
   }
@@ -86,7 +92,7 @@
 <div class="game-container">
   <div class="grid" id="grid"></div>
   <div class="message-box" id="message">i hate coding, but i love you <3</div>
-  </div>             
+</div>             
 
 <script>
   const grid = document.getElementById("grid");
@@ -96,7 +102,14 @@
   const cols = 5;
   const tileSize = 60;
   const gap = 4;
-  const giftPos = { row: 4, col: 4 };
+
+  const levels = [
+    { pawPos: { row: 4, col: 4 }, message: "i hate coding, but i love you <3" },
+    { pawPos: { row: 2, col: 1 }, message: "always my favorite person :)" },
+    { pawPos: { row: 0, col: 3 }, message: "careful w my tv tho" }
+  ];
+
+  let currentLevel = 0;
   let charPos = { row: 0, col: 0 };
 
   const character = document.createElement("div");
@@ -112,30 +125,91 @@
       tile.className = "tile";
       tile.dataset.row = r;
       tile.dataset.col = c;
-      if (r === giftPos.row && c === giftPos.col) tile.innerHTML = "🐾";
-      tile.addEventListener("click", () => moveCharacter(r, c));
+      tile.addEventListener("click", () => tryMove(r, c));
       grid.appendChild(tile);
       tiles[r][c] = tile;
+    }
+  }
+
+  function tryMove(row, col) {
+    const rowDiff = Math.abs(row - charPos.row);
+    const colDiff = Math.abs(col - charPos.col);
+
+    if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
+      moveCharacter(row, col);
     }
   }
 
   function moveCharacter(row, col) {
     charPos = { row, col };
     const tile = tiles[row][col];
-    const rect = tile.getBoundingClientRect();
-    const gridRect = grid.getBoundingClientRect();
 
     const top = tile.offsetTop + tile.offsetHeight/2 - character.offsetHeight/2;
     const left = tile.offsetLeft + tile.offsetWidth/2 - character.offsetWidth/2;
     character.style.top = top + "px";
     character.style.left = left + "px";
 
-    if (row === giftPos.row && col === giftPos.col) {
+    const level = levels[currentLevel];
+    if (row === level.pawPos.row && col === level.pawPos.col) {
+      message.innerHTML = level.message;
       message.classList.add("show");
+
+      setTimeout(() => {
+        message.classList.remove("show");
+        currentLevel++;
+        if (currentLevel < levels.length) {
+          setupLevel(currentLevel);
+        } else {
+          message.innerHTML = "levels completed :)";
+          message.classList.add("show");
+        }
+      }, 2500);
     }
   }
 
-  moveCharacter(charPos.row, charPos.col);
+  function setupLevel(levelIndex) {
+    const level = levels[levelIndex];
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (tiles[r][c].innerHTML === "🐾") tiles[r][c].innerHTML = "";
+      }
+    }
+
+    const { row, col } = level.pawPos;
+    tiles[row][col].innerHTML = "🐾";
+
+    message.classList.remove("show");
+
+    charPos = { row: 0, col: 0 };
+    moveCharacter(charPos.row, charPos.col);
+  }
+
+  document.addEventListener("keydown", (e) => {
+    let newRow = charPos.row;
+    let newCol = charPos.col;
+
+    switch (e.key) {
+      case "ArrowUp":
+        newRow = Math.max(0, charPos.row - 1);
+        break;
+      case "ArrowDown":
+        newRow = Math.min(rows - 1, charPos.row + 1);
+        break;
+      case "ArrowLeft":
+        newCol = Math.max(0, charPos.col - 1);
+        break;
+      case "ArrowRight":
+        newCol = Math.min(cols - 1, charPos.col + 1);
+        break;
+      default:
+        return;
+    }
+
+    moveCharacter(newRow, newCol);
+  });
+
+  setupLevel(currentLevel);
 
   const snowflakeCount = 40;
   for (let i = 0; i < snowflakeCount; i++) {
