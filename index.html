@@ -1,3 +1,99 @@
-<!doctype html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>for you, my love</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
 
-<html lang="en-US"> <head> <meta charset="utf-8" /> <title>thought out</title> </head> <body> <h2>thanks</h2> <p>i still think things out when it comes to you, deeply in fact, but i've learnt i can still show care, and love, even when it's raw and messy, authentically something that i am. i love loving you for what i know, not idealization or perfection, just you placed directly into my whole heart. that, and these notes, are the rawest form of love that i have learnt to love giving. thanks for having the gentleness to stay as i've learnt to open up. you've done me good.</p> </body> </html> 
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #fdf6f9;
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .container {
+        text-align: center;
+        padding: 20px;
+        position: relative;
+        z-index: 2;
+    }
+
+    h1 {
+        font-weight: 400;
+        font-size: 1.8rem;
+        color: #d66a87;
+        margin-bottom: 20px;
+    }
+
+    .message {
+        font-size: 1.3rem;
+        color: #333;
+        width: 52ch;
+        white-space: nowrap;
+        overflow: hidden;
+        border-right: 2px solid #d66a87;
+        animation: typing 6s steps(60) forwards,
+                   blink .7s step-end infinite;
+    }
+
+    @keyframes typing {
+        from { width: 0ch; }
+        to { width: 52ch; }
+    }
+
+    @keyframes blink {
+        50% { border-color: transparent; }
+    }
+
+    .snowflake {
+        position: absolute;
+        top: -10px;
+        color: #ffb8d2cc; /* soft pink */
+        font-size: 1rem;
+        user-select: none;
+        animation: fall linear infinite;
+        opacity: 0.9;
+        z-index: 1;
+    }
+
+    @keyframes fall {
+        to {
+            transform: translateY(110vh) rotate(360deg);
+        }
+    }
+</style>
+</head>
+
+<body>
+
+    <script>
+        const snowflakeCount = 40;
+        for (let i = 0; i < snowflakeCount; i++) {
+            let flake = document.createElement("div");
+            flake.className = "snowflake";
+            flake.innerHTML = "❄";
+            flake.style.left = Math.random() * 100 + "vw";
+            flake.style.animationDuration = (4 + Math.random() * 6) + "s";
+            flake.style.fontSize = (12 + Math.random() * 10) + "px";
+            flake.style.opacity = 0.6 + Math.random() * 0.4;
+            document.body.appendChild(flake);
+        }
+    </script>
+
+    <div class="container">
+        <h1>for you, my love</h1>
+        <div class="message">
+            merry christmas, my sweet boy. you're the best thing i've been gifted.
+        </div>
+    </div>
+
+</body>
+</html>
+
